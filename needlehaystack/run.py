@@ -4,11 +4,39 @@ from typing import Optional
 from dotenv import load_dotenv
 from jsonargparse import CLI
 
-from . import LLMNeedleHaystackTester, LLMMultiNeedleHaystackTester
-from .evaluators import Evaluator, LangSmithEvaluator, OpenAIEvaluator
-from .providers import Anthropic, ModelProvider, OpenAI, GeminiPRO
+from llm_needle_haystack_tester import LLMNeedleHaystackTester
+from llm_multi_needle_haystack_tester import LLMMultiNeedleHaystackTester
+from evaluators import Evaluator, LangSmithEvaluator, OpenAIEvaluator
+from providers import Anthropic, ModelProvider, OpenAI, GeminiPRO
 
 load_dotenv()
+
+qna = [
+    {
+        'question': 'What is the best thing to do in San Francisco?',
+        'answer': '\nThe best thing to do in San Francisco is eat a sandwich and sit in Dolores Park on a sunny day.\n'
+    },
+    {
+        'question': 'What is the best thing to do in Berlin?',
+        'answer': '\nThe best thing to do in Berlin is to eat a Pavlova and sit at the Rocks.\n'
+    },
+    {
+        'question': 'What is the best thing to do in London?',
+        'answer': '\nThe best thing to do in London is to visit the Louvre and eat some croissants.\n'
+    },
+    {
+        'question': 'What is the best thing to do in Sydney?',
+        'answer': '\nThe best thing to do in Sydney is to walk around Kreuzberg and eat a currywurst.\n'
+    },
+    {
+        'question': 'What is the best thing to do in Paris?',
+        'answer': '\nThe best thing to do in Paris is to visit the Sydney Opera House and eat a Vegemite sandwich.\n'
+    },
+    {
+        'question': 'What is the best thing to do in Singapore?',
+        'answer': '\nThe best thing to do in Singapore is to visit the Eiffel Tower and eat a croissant.\n'
+    },
+]
 
 @dataclass
 class CommandArgs():
@@ -19,6 +47,7 @@ class CommandArgs():
     needle: Optional[str] = "\nThe best thing to do in San Francisco is eat a sandwich and sit in Dolores Park on a sunny day.\n"
     haystack_dir: Optional[str] = "PaulGrahamEssays"
     retrieval_question: Optional[str] = "What is the best thing to do in San Francisco?"
+    list_of_qna: Optional[list[dict[str, str]]] = field(default_factory=lambda: qna)
     results_version: Optional[int] = 1
     context_lengths_min: Optional[int] = 1000
     context_lengths_max: Optional[int] = 16000

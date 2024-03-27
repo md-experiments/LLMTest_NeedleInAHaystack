@@ -1,15 +1,15 @@
-import asyncio
+#import asyncio
 import glob
 import json
 import os
 import time
-
+import sys
 import numpy as np
 
-from .evaluators import Evaluator
-from .providers import ModelProvider
-
-from asyncio import Semaphore
+from evaluators import Evaluator
+from providers import ModelProvider
+import time
+#from asyncio import Semaphore
 from datetime import datetime, timezone
 
 class LLMNeedleHaystackTester:
@@ -22,6 +22,7 @@ class LLMNeedleHaystackTester:
                  needle = None,
                  haystack_dir = "PaulGrahamEssays",
                  retrieval_question = None,
+                 list_of_qna = None,
                  results_version = 1,
                  context_lengths_min = 1000,
                  context_lengths_max = 16000,
@@ -71,6 +72,7 @@ class LLMNeedleHaystackTester:
         self.needle = needle
         self.haystack_dir = haystack_dir
         self.retrieval_question = retrieval_question
+        self.list_of_qna = list_of_qna
         self.results_version = results_version
         self.num_concurrent_requests = num_concurrent_requests
         self.save_results = save_results
@@ -122,20 +124,31 @@ class LLMNeedleHaystackTester:
         async with sem:
             await self.evaluate_and_log(*args)
 
-    async def run_test(self):
-        sem = Semaphore(self.num_concurrent_requests)
+    def run_test(self):
+        #sem = Semaphore(self.num_concurrent_requests)
 
         # Run through each iteration of context_lengths and depths
         tasks = []
         for context_length in self.context_lengths:
             for depth_percent in self.document_depth_percents:
-                task = self.bound_evaluate_and_log(sem, context_length, depth_percent)
-                tasks.append(task)
+                #task = self.bound_evaluate_and_log(sem, context_length, depth_percent)
+                #tasks.append(task)
+                rnd_qna = np.random.choice(self.list_of_qna)
+                self.needle = rnd_qna['answer']
+                self.retrieval_question = rnd_qna['question']
 
+                try:
+                    self.evaluate_and_log(context_length, depth_percent)
+                except KeyboardInterrupt:
+                    print("Execution interrupted by user.")
+                    sys.exit()
+                except Exception as e:
+                    print(f"An error occurred: {e}")
+                    time.sleep(5)
         # Wait for all tasks to complete
-        await asyncio.gather(*tasks)
+        #await asyncio.gather(*tasks)
 
-    async def evaluate_and_log(self, context_length, depth_percent):
+    def evaluate_and_log(self, context_length, depth_percent):
         # Checks to see if you've already checked a length/percent/version.
         # This helps if the program stop running and you want to restart later
         if self.save_results:
@@ -143,7 +156,7 @@ class LLMNeedleHaystackTester:
                 return
 
         # Go generate the required length context and place your needle statement in
-        context = await self.generate_context(context_length, depth_percent)
+        context = self.generate_context(context_length, depth_percent)
 
         # Prepare your message to send to the model you're going to evaluate
         prompt = self.model_to_test.generate_prompt(context, self.retrieval_question)
@@ -151,7 +164,7 @@ class LLMNeedleHaystackTester:
         test_start_time = time.time()
 
         # Go see if the model can answer the question to pull out your random fact
-        response = await self.model_to_test.evaluate_model(prompt)
+        response = self.model_to_test.evaluate_model(prompt)
 
         test_end_time = time.time()
         test_elapsed_time = test_end_time - test_start_time
@@ -204,7 +217,7 @@ class LLMNeedleHaystackTester:
                 json.dump(results, f)
 
         if self.seconds_to_sleep_between_completions:
-            await asyncio.sleep(self.seconds_to_sleep_between_completions)
+            time.sleep(self.seconds_to_sleep_between_completions)
 
     def result_exists(self, context_length, depth_percent):
         """
@@ -227,7 +240,7 @@ class LLMNeedleHaystackTester:
                         return True
         return False
 
-    async def generate_context(self, context_length, depth_percent):
+    def generate_context(self, context_length, depth_percent):
         # Load up tiktoken so we navigate tokens more easily
 
         # Get your haystack dir files loaded into a string
@@ -313,4 +326,4 @@ class LLMNeedleHaystackTester:
     def start_test(self):
         if self.print_ongoing_status:
             self.print_start_test_summary()
-        asyncio.run(self.run_test())
+        self.run_test()
