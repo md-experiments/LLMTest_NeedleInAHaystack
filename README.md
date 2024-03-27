@@ -1,3 +1,9 @@
+# NB: Some changes made to the original repo
+
+1. Removed async as the gemini-api and google async didn't agree with the rest of the solution
+2. gemini does not offer a tokenize encode/decode api endpoint hence I have used GPT tokenizer instead. I have analyzed the token lengths at different context lenght and overall it seems Gemini tokenizer is pretty consistently 4% longer than GPT
+3. Did not update the pypi index and running this locally after removing relative references in the code
+
 # Needle In A Haystack - Pressure Testing LLMs
 
 A simple 'needle in a haystack' analysis to test in-context retrieval ability of long context LLMs.
