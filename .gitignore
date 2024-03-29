@@ -87,7 +87,9 @@ target/
 # Keep the viz though
 !CreateVizFromLLMTesting.ipynb
 !CreateVisFromLangSmithTesting.ipynb
-
+*.key
+results/
+contexts/
 # IPython
 profile_default/
 ipython_config.py

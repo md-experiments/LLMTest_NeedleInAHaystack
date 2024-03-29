@@ -14,7 +14,7 @@ load_dotenv()
 qna = [
     {
         'question': 'What is the best thing to do in San Francisco?',
-        'answer': '\nThe best thing to do in San Francisco is eat a sandwich and sit in Dolores Park on a sunny day.\n'
+        'answer': '\nThe best thing to do in San Francisco is eat a sandwich and sit in Hide Park on a sunny day.\n'
     },
     {
         'question': 'What is the best thing to do in Berlin?',

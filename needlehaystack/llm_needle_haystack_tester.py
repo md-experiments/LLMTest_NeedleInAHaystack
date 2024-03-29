@@ -8,6 +8,7 @@ import numpy as np
 
 from evaluators import Evaluator
 from providers import ModelProvider
+from evaluators import OpenAIEvaluator
 import time
 #from asyncio import Semaphore
 from datetime import datetime, timezone
@@ -39,6 +40,7 @@ class LLMNeedleHaystackTester:
                  final_context_length_buffer = 200,
                  seconds_to_sleep_between_completions = None,
                  print_ongoing_status = True,
+                 evaluator_model_name = 'gpt-3.5-turbo-0125',
                  **kwargs):
         """
         :model_to_test: The model to test. Default is None.
@@ -62,6 +64,7 @@ class LLMNeedleHaystackTester:
         :param document_depth_percent_interval_type: The type of interval for the document depth percent. Must be either 'linear' or 'sigmoid'. Default is 'linear'.
         :param seconds_to_sleep_between_completions: The number of seconds to sleep between completions. Default is None.
         :param print_ongoing_status: Whether or not to print the ongoing status. Default is True.
+        :param evaluator_model_name: The name of the evaluator model. Default is 'gpt-3.5-turbo-0125'.
         :param kwargs: Additional arguments.
         """
         if not model_to_test:
@@ -81,7 +84,7 @@ class LLMNeedleHaystackTester:
         self.seconds_to_sleep_between_completions = seconds_to_sleep_between_completions
         self.print_ongoing_status = print_ongoing_status
         self.testing_results = []
-
+        self.evaluator_model_name = evaluator_model_name
         if context_lengths is None:
             if context_lengths_min is None or context_lengths_max is None or context_lengths_num_intervals is None:
                 raise ValueError("Either context_lengths_min, context_lengths_max, context_lengths_intervals need to be filled out OR the context_lengths_list needs to be supplied.")
@@ -133,9 +136,11 @@ class LLMNeedleHaystackTester:
             for depth_percent in self.document_depth_percents:
                 #task = self.bound_evaluate_and_log(sem, context_length, depth_percent)
                 #tasks.append(task)
-                rnd_qna = np.random.choice(self.list_of_qna)
-                self.needle = rnd_qna['answer']
-                self.retrieval_question = rnd_qna['question']
+                random_qna = False
+                if random_qna:
+                    rnd_qna = np.random.choice(self.list_of_qna)
+                    self.needle = rnd_qna['answer']
+                    self.retrieval_question = rnd_qna['question']
 
                 try:
                     self.evaluate_and_log(context_length, depth_percent)
@@ -165,10 +170,12 @@ class LLMNeedleHaystackTester:
 
         # Go see if the model can answer the question to pull out your random fact
         response = self.model_to_test.evaluate_model(prompt)
-
+        print(response)
         test_end_time = time.time()
         test_elapsed_time = test_end_time - test_start_time
-
+        self.evaluation_model = OpenAIEvaluator(model_name=self.evaluator_model_name,
+                            question_asked=self.retrieval_question,
+                            true_answer=self.needle)
         # Compare the reponse to the actual needle you placed
         score = self.evaluation_model.evaluate_response(response)
 
